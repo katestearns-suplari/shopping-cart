@@ -1,4 +1,4 @@
-#Shopping Cart Node
+# Shopping Cart Node
 
 #### Objectives:
 1) Create table for items
