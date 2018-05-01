@@ -108,4 +108,9 @@ router.delete('/api/v1/carts/:id', (req, res, next) => {
     });
 })
 
+// Item routes
+//   name |  price  | url
+// -------+---------+-----
+// string | numeric | string
+
 module.exports = router;
