@@ -5,8 +5,7 @@ const client = new pg.Client(connectionString);
 client.connect();
 
 const query = client.query(
-    'CREATE TABLE items(id SERIAL PRIMARY KEY, name VARCHAR(40) not null, price NUMERIC, url VARCHAR(40))'
+    'CREATE TABLE cart(id SERIAL PRIMARY KEY, quantity NUMERIC, item JSON)'
 );
 
 query.on('end', () => { client.end(); })
-
