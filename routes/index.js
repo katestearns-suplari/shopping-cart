@@ -11,7 +11,7 @@ const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/
 
 router.post('/api/v1/carts', (req, res, next) => {
     const results = [];
-    const data = {quantity: req.body.quantity, item: req.body.item};
+    const data = {quantity: req.body.quantity, itemid: req.body.itemid};
 
     pg.connect(connectionString, (err, client, done) => {
       if (err) {
@@ -20,7 +20,7 @@ router.post('/api/v1/carts', (req, res, next) => {
           return res.status(500).json({success: false, data: err});
       }
 
-      client.query('INSERT INTO cart(quantity, item) values($1, $2)', [data.quantity, data.item]);
+      client.query('INSERT INTO cart(quantity, itemid) values($1, $2)', [data.quantity, data.itemid]);
 
       const query = client.query('SELECT * FROM cart ORDER BY quantity DESC');
 
@@ -204,5 +204,50 @@ router.delete('/api/v1/products/:id', (req, res, next) => {
         });
     });
 })
+
+router.get('/api/v1/carts/total', (req, res, next) => {
+    const cart = {};
+    pg.connect(connectionString, (err, client, done) => {
+        if (err) {
+            done();
+            console.log(err);
+            return res.status(500).json({success: false, data: err});
+        }
+
+        client.query('SELECT quantity, itemid FROM cart;')
+        .then(({rows}) => {
+            for (let row of rows) {
+                cart[row.itemid] = {quantity: row.quantity}
+            }
+        })
+        .catch(err => console.log(err))
+
+        client.query('SELECT id, price FROM products;')
+        .catch(err => console.log(err))
+        .then(({rows}) => {
+            for (let row of rows) {
+                cart[row.id] = Object.assign({}, cart[row.id], row)
+            }
+            const cartTotal = calculateCart(cart);
+            client.end((err) => {
+                if (err) return res.json(err);
+                return res.json(cartTotal);
+            })
+        })
+    })
+})
+
+
+function calculateCart(cart) {
+    let total = 0;
+    let ids = Object.keys(cart);
+    for (let i=0; i<ids.length; i++) {
+        let id = ids[i];
+        quantity = cart[id].quantity || 0;
+        price = cart[id].price || 0;
+        total += Number(quantity * price);
+    }
+    return total;
+}
 
 module.exports = router;
