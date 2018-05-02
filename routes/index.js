@@ -56,102 +56,12 @@ router.get('/api/v1/carts', (req, res, next) => {
    });
  })
 
-router.put('/api/v1/carts/:id', (req, res, next) => {
-    const results = [];
-    const data = {quantity: req.body.quantity, item: req.body.item};
-
-    pg.connect(connectionString, (err, client, done) => {
-        if(err) {
-            done();
-            console.log(err);
-            return res.status(500).json({success : false, data: err});
-        }
-
-        const id = req.params.id;
-        const query = client.query('UPDATE cart SET quantity=($1), item=($2) WHERE id=($3)', [data.quantity, data.item, id]);
-        query.on('row', (row) => {
-            results.push(row);
-        });
-
-        query.on('end', () => {
-            done();
-            return res.json(results);
-        });
-    });
- })
-
-router.delete('/api/v1/carts/:id', (req, res, next) => {
-     const results = [];
-
-     pg.connect(connectionString, (err, client, done) => {
-         if (err) {
-             done();
-             console.log(err);
-             return res.status(500).json({success: false, data: err});
-         }
-
-         const id = req.params.id;
-         const query = client.query('DELETE FROM cart WHERE id=($1)', [id]);
-         query.on('row', (row) => {
-             results.push(row);
-         });
-
-         query.on('end', ()=> {
-             done();
-             return res.json(results);
-         })
-     })
- })
+// TODO: put, delete
 
 
  // Product routes
 
-router.get('/api/v1/products', (req, res, next)=> {
-     const results = [];
-
-     pg.connect(connectionString, (err, client, done) => {
-         if (err) {
-             done();
-             console.log(err);
-             return res.status(500).json({success: false, data: err});
-         }
-
-         const query = client.query('SELECT * FROM products ORDER BY price DESC;');
-         query.on('row', (row)=> {
-             results.push(row);
-         })
-
-         query.on('end', () => {
-             done();
-             return res.json(results);
-         });
-     });
- })
-
-router.post('/api/v1/products', (req, res, next) => {
-     const results = [];
-     const data = {name: req.body.name, description: req.body.description, price: req.body.price, imageurl: req.body.imageurl};
-
-     pg.connect(connectionString, (err, client, done) => {
-         if (err) {
-             done();
-             console.log(err);
-             return res.status(500).json({success: false, data: err});
-         }
-
-         client.query('INSERT INTO products(name, description, price, imageurl) values($1, $2, $3, $4)', [data.name, data.description, data.price, data.imageurl]);
-
-         const query = client.query('SELECT * FROM products ORDER BY price DESC');
-         query.on('row', (row) => {
-             results.push(row);
-         });
-
-         query.on('end', () => {
-             done();
-             return res.json(results);
-         });
-     });
- })
+// TODO: 
 
 router.put('/api/v1/products/:id', (req, res, next) => {
      const results = [];
