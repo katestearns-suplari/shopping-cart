@@ -9,9 +9,28 @@ const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/
 // ---------+-------
 //  numeric | numeric
 
+const errorHandler = (err, done, res) => {
+    done();
+    console.log(err);
+    return res.status(500).json({success: false, data: err});
+}
+
+const runQuery = (query) => {
+    const results = [];
+    query.on('row', (row) => {
+        results.push(row);
+    });
+
+    query.on('end', () => {
+        done();
+        return res.json(results);
+    });
+}
+
+
 router.post('/api/v1/carts', (req, res, next) => {
     const results = [];
-    const data = {quantity: req.body.quantity, item: req.body.item};
+    const data = {quantity: req.body.quantity, itemid: req.body.itemid};
 
     pg.connect(connectionString, (err, client, done) => {
       if (err) {
@@ -20,7 +39,7 @@ router.post('/api/v1/carts', (req, res, next) => {
           return res.status(500).json({success: false, data: err});
       }
 
-      client.query('INSERT INTO cart(quantity, item) values($1, $2)', [data.quantity, data.item]);
+      client.query('INSERT INTO cart(quantity, itemid) values($1, $2)', [data.quantity, data.itemid]);
 
       const query = client.query('SELECT * FROM cart ORDER BY quantity DESC');
 
@@ -56,12 +75,100 @@ router.get('/api/v1/carts', (req, res, next) => {
    });
  })
 
-// TODO: put, delete
+router.put('/api/v1/carts/:id', (req, res, next) => {
+    const results = [];
+    const data = {quantity: req.body.quantity, itemid: req.body.itemid}
+    const id = req.params.id;
+
+    pg.connect(connectionString, (err, client, done) => {
+        if (err) {
+            done();
+            console.log(err);
+            return res.status(500).json({success: false, data: err});
+        }
+
+        client.query('UPDATE cart SET quantity = ($1), itemid = ($2) WHERE id=($3)', [data.quantity, data.itemid, id])
+        const query = client.query('SELECT * from cart');
+        query.on('row', (row) => {
+            results.push(row);
+        });
+        query.on('end', () => {
+            done();
+            return res.json(results);
+        });
+    });
+});
+
+router.delete('/api/v1/carts/:id', (req, res, next) => {
+    const results = [];
+    const id = req.params.id;
+
+    pg.connect(connectionString, (err, client, done) => {
+        if (err) {
+            done();
+            console.log(err);
+            return res.status(500).json({success: false, data: err});
+        }
+
+        client.query('DELETE from cart WHERE id=($1)', [id]);
+
+        const query = client.query('SELECT * from cart;');
+        query.on('row', (row)=> {
+            results.push(row);
+        });
+
+        query.on('end', () => {
+            done();
+            return res.json(results);
+        });
+    });
+})
 
 
  // Product routes
+router.get('/api/v1/products', (req, res, next) => {
+    pg.connect(connectionString, (err, client, done) => {
+        if(err) {
+            errorHandler(err, done, res);
+            return;
+        }
+        const query = client.query('SELECT * FROM products ORDER BY name ASC');
+        // runQuery(query);
+        // query.on('row', (row) => {
+        //     results.push(row);
+        // });
+        //
+        // query.on('end', () => {
+        //     done();
+        //     return res.json(results);
+        // });
+    });
+})
 
-// TODO: 
+router.post('/api/v1/products', (req, res, next) => {
+    const results = [];
+    const data = {name: req.body.name, description: req.body.description, price: req.body.price, imageurl: req.body.imageurl};
+
+    pg.connect(connectionString, (err, client, done) => {
+        if (err) {
+            done();
+            console.log(err);
+            return res.status(500).json({success: false, data: err});
+        }
+
+        client.query('INSERT INTO products(name, description, price, imageurl) values($1, $2, $3, $4)', [data.name, data.description, data.price, data.imageurl]);
+        const query = client.query('SELECT * FROM products ORDER BY name ASC');
+
+        query.on('row', (row) => {
+            results.push(row);
+        });
+
+        query.on('end', () => {
+            done();
+            return res.json(results);
+        });
+    });
+})
 
 router.put('/api/v1/products/:id', (req, res, next) => {
      const results = [];
@@ -114,5 +221,7 @@ router.delete('/api/v1/products/:id', (req, res, next) => {
         });
     });
 })
+
+// TODO: Create route to return cart total
 
 module.exports = router;
