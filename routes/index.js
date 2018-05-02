@@ -103,4 +103,81 @@ router.get('/api/v1/carts', (req, res, next) => {
      })
  })
 
+
+ // Product routes
+
+ router.get('/api/v1/products', (req, res, next)=> {
+     const results = [];
+
+     pg.connect(connectionString, (err, client, done) => {
+         if (err) {
+             done();
+             console.log(err);
+             return res.status(500).json({success: false, data: err});
+         }
+
+         const query = client.query('SELECT * FROM products ORDER BY price DESC;');
+         query.on('row', (row)=> {
+             results.push(row);
+         })
+
+         query.on('end', () => {
+             done();
+             return res.json(results);
+         });
+     });
+ })
+
+ router.post('/api/v1/products', (req, res, next) => {
+     const results = [];
+     const data = {name: req.body.name, description: req.body.description, price: req.body.price, imageurl: req.body.imageurl};
+
+     pg.connect(connectionString, (err, client, done) => {
+         if (err) {
+             done();
+             console.log(err);
+             return res.status(500).json({success: false, data: err});
+         }
+
+         client.query('INSERT INTO products(name, description, price, imageurl) values($1, $2, $3, $4)', [data.name, data.description, data.price, data.imageurl]);
+
+         const query = client.query('SELECT * FROM products ORDER BY price DESC');
+         query.on('row', (row) => {
+             results.push(row);
+         });
+
+         query.on('end', () => {
+             done();
+             return res.json(results);
+         });
+     });
+ })
+
+ router.put('/api/v1/products/:id', (req, res, next) => {
+     const results = [];
+     const data = {name: req.body.name, description: req.body.description, price: req.body.price, imageurl: req.body.imageurl};
+
+     pg.connect(connectionString, (err, client, done) => {
+         if (err) {
+             done();
+             console.log(err);
+             return res.status(500).json({success: false, data: err});
+         }
+
+         const id = req.params.id
+         client.query('UPDATE products SET name=($1), description=($2), price=($3), imageurl=($4) WHERE id=($5)', [data.name, data.description, data.price, data.imageurl, id])
+
+         const query = client.query('SELECT * FROM products ORDER BY price DESC');
+         query.on('row', (row) => {
+             results.push(row);
+         });
+
+         query.on('end', () => {
+             done();
+             return res.json(results);
+         });
+
+     })
+ })
+
 module.exports = router;
