@@ -108,6 +108,13 @@ router.delete('/api/v1/carts/:id', (req, res, next) => {
 
 // TODO: Create product routes
 // name, description, price, image url
+
+const errHandler = (err, res, done) => {
+    done();
+    console.log(err);
+    return res.status(500).json({success: false, data: err});
+}
+
 router.post('/api/v1/products', (req, res, next) => {
     const { name, description, price, imageurl } = req.body
 
@@ -115,9 +122,7 @@ router.post('/api/v1/products', (req, res, next) => {
 
     pg.connect(connectionString, (err, client, done) => {
         if (err) {
-            done();
-            console.log(err)
-            return res.status(500).json({success: false, data: err})
+            errHandler(err, res, done)
         }
 
         const query = client.query('INSERT INTO products(name, description, price, imageurl) values($1, $2, $3, $4)', [data.name, data.description, data.price, data.imageurl]);
@@ -135,9 +140,7 @@ router.get('/api/v1/products', (req, res, next) => {
 
     pg.connect(connectionString, (err, client, done) => {
       if (err) {
-          done();
-          console.log(err);
-          return res.status(500).json({success: false, data: err});
+          errHandler(err, res, done)
       }
 
       const query = client.query('SELECT * FROM products')
@@ -159,12 +162,9 @@ router.put('/api/v1/products/:id', (req, res, next) => {
 
     pg.connect(connectionString, (err, client, done) => {
         if (err) {
-            done();
-            console.log(err);
-            return res.status(500).json({success: false, data: err});
+            errHandler(err, res, done)
         }
 
-        // UPDATE cart SET quantity=($1), item=($2) WHERE id=($3)
         const query = client.query('UPDATE products SET name=($1), description=($2), price=($3), imageurl=($4) WHERE id=($5)', [name, description, price, imageurl, id]);
 
         query.on('end', () => {
@@ -179,9 +179,7 @@ router.delete('/api/v1/products/:id', (req, res, next) => {
 
     pg.connect(connectionString, (err, client, done) => {
         if (err) {
-            done();
-            console.log(err);
-            return res.status(500).json({success: false, data: err});
+            errHandler(err, res, done)
         }
 
         const query = client.query('DELETE FROM products where id=($1)', [id]);
